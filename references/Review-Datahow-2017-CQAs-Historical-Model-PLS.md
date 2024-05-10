@@ -29,8 +29,6 @@
    
    - **普遍适用的工具集**：案例研究中提出的通用工具集为过程开发中的决策和过程优化提供了可靠的基础。
 
-
-
 ## Introduction
 
 - Datahow-2015-MVDA-PCA visualized the dynamic change of the interrelationship between the process variables and the produced titer and demonstrated that reliable forecast models can be generated after a few process days(3-4days or all days).
@@ -53,17 +51,11 @@
      - 这导致模型在解释培养过程与质量变量之间的关系时受到限制。
 - **总体解释**：虽然PLSR模型能够相当准确地预测某些质量变量，但由于变量数量众多和培养运行样本量较少且差异显著，对整体关系的解释能力有限。
 
-
-
  **研究创新点**
 
 - **单一可靠的细胞培养模型**：
   - 该模型能够在特定时间点，基于整体过程信息（过程属性，PA）准确预测一大组最终产品的质量属性（CQAs）。
   - 这种预测是通过大量设计的毫升级细胞培养实验实现的。
-
-
-
-
 
 ## Experimental procedure
 
@@ -132,5 +124,3 @@
 - 本实验采用 ambr® 15 系统在毫升级别上对细胞培养过程中的各种培养基因素和工艺参数进行了研究。
 - 设计了四个实验块，使用分数阶析因设计和OPAT分析方法测试了九个补充培养基因素及三种工艺执行策略。
 - 实验提供了大量过程信息，包括多种工艺和产品质量属性，为进一步模型开发和优化提供了丰富的数据。
-
-
