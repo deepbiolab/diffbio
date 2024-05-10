@@ -16,8 +16,6 @@
 > 
 > - Replicate Variables: process robustness
 
-
-
 ## Description of data
 
 W:
@@ -54,8 +52,6 @@ F:
 
 Y: Titer, contained 56% of missing values, measured on even days.
 
-
-
 Initial value:
 
 - pH set
@@ -72,8 +68,6 @@ Initial value:
 
 - OWU: Observation-Wise Unfolding
 
-
-
 ## Deal with missing values
 
 - **Eliminating** all rows which comprise missing X (and Y) values for PCA (and PLSR);
@@ -83,6 +77,7 @@ Initial value:
   - **选择插值方法**：
     
     - 不同插值方法可用于估算缺失值，例如：
+      
       - 线性插值
       - 多项式插值
       - 滑动平均
@@ -90,9 +85,13 @@ Initial value:
       - 洛伦兹插值
     
     - 根据时间序列数据，对输出变量Y的每一个维度单独进行插值填补。
+  
   - **对X进行插值**：
+    
     - 根据时间序列数据，对输入变量X的每一个维度单独进行插值填补。
+  
   - **对Y进行插值**：
+    
     - 根据时间序列数据，对输出变量Y的每一个维度单独进行插值填补。
 
 - **Imputing** the missing data:
@@ -103,8 +102,6 @@ Initial value:
   
   - imputations **separately** in the X and Y space is to eliminate any information
     exchange in order to ensure unbiased prediction.
-
-
 
 ## Normlization Data
 
@@ -200,12 +197,9 @@ Initial value:
   7   -0.419584  0.134740 -1.133076  0.266431
   8    0.298941 -0.451077 -1.829043  0.730120
   9   -0.546522  2.332488 -0.337729  0.648241
-  
-  
   ```
 
-
-
+```
 ## Model Performance Evaluation
 
 - K-Fold
@@ -213,83 +207,77 @@ Initial value:
 - 用于评估模型性能和预测能力，避免过拟合。
 
 - 过程：
-  
-  1. 将数据集分成k个子集（通常k=5或k=10）。
-  
-  2. 每次选择其中一个子集作为测试集，其余子集作为训练集。
-  
-  3. 基于训练集构建模型，并使用该模型预测测试集中的Y值。
-  
-  4. 计算实际Y值和预测Y值之间的误差，并记录每次交叉验证的误差。**RMSECV（交叉验证中的均方根误差）：**
-     
-     - 计算实际和预测Y值的平方差之和，并取平方根。
-     - 衡量模型在交叉验证中的预测误差，值越小表示模型预测能力越好。
-  
-  5. 计算实际Y值和预测Y值之间的**Q²（解释的方差）：**
-     
-     - 表示交叉验证中解释的方差占总方差的比值。
-     - 值范围为0到1，越接近1表示模型越能解释数据的方差。
+
+1. 将数据集分成k个子集（通常k=5或k=10）。
+
+2. 每次选择其中一个子集作为测试集，其余子集作为训练集。
+
+3. 基于训练集构建模型，并使用该模型预测测试集中的Y值。
+
+4. 计算实际Y值和预测Y值之间的误差，并记录每次交叉验证的误差。**RMSECV（交叉验证中的均方根误差）：**
+
+   - 计算实际和预测Y值的平方差之和，并取平方根。
+   - 衡量模型在交叉验证中的预测误差，值越小表示模型预测能力越好。
+
+5. 计算实际Y值和预测Y值之间的**Q²（解释的方差）：**
+
+   - 表示交叉验证中解释的方差占总方差的比值。
+   - 值范围为0到1，越接近1表示模型越能解释数据的方差。
 
 - 示例代码:
-  
-  ```python
-  from sklearn.model_selection import KFold
-  from sklearn.cross_decomposition import PLSRegression
-  from sklearn.metrics import mean_squared_error
-  import numpy as np
-  
-  # 生成示例数据集
-  np.random.seed(42)
-  n_samples = 100
-  n_features = 10
-  X = np.random.rand(n_samples, n_features)
-  Y = np.random.rand(n_samples, 1)
-  
-  # 设置PLS回归模型参数
-  n_components = 2
-  pls = PLSRegression(n_components=n_components)
-  
-  # 设置k折交叉验证参数
-  k = 5
-  kf = KFold(n_splits=k, shuffle=True, random_state=42)
-  
-  # 交叉验证评估模型性能
-  rmsecv_list = []
-  q2_list = []
-  
-  for train_index, test_index in kf.split(X):
-      X_train, X_test = X[train_index], X[test_index]
-      Y_train, Y_test = Y[train_index], Y[test_index]
-      
-      # 训练PLS回归模型
-      pls.fit(X_train, Y_train)
-      
-      # 预测测试集的Y值
-      Y_pred = pls.predict(X_test)
-      
-      # 计算RMSECV
-      rmsecv = np.sqrt(mean_squared_error(Y_test, Y_pred))
-      rmsecv_list.append(rmsecv)
-      
-      # 计算Q²
-      ss_tot = np.sum((Y_test - np.mean(Y_test))**2)
-      ss_res = np.sum((Y_test - Y_pred)**2)
-      q2 = 1 - ss_res / ss_tot
-      q2_list.append(q2)
-  
-  # 计算平均RMSECV和平均Q²
-  mean_rmsecv = np.mean(rmsecv_list)
-  mean_q2 = np.mean(q2_list)
-  
-  print(f"平均RMSECV: {mean_rmsecv:.4f}")
-  print(f"平均Q²: {mean_q2:.4f}")
-  
-  
-  ```
 
+```python
+from sklearn.model_selection import KFold
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.metrics import mean_squared_error
+import numpy as np
 
+# 生成示例数据集
+np.random.seed(42)
+n_samples = 100
+n_features = 10
+X = np.random.rand(n_samples, n_features)
+Y = np.random.rand(n_samples, 1)
 
+# 设置PLS回归模型参数
+n_components = 2
+pls = PLSRegression(n_components=n_components)
 
+# 设置k折交叉验证参数
+k = 5
+kf = KFold(n_splits=k, shuffle=True, random_state=42)
+
+# 交叉验证评估模型性能
+rmsecv_list = []
+q2_list = []
+
+for train_index, test_index in kf.split(X):
+    X_train, X_test = X[train_index], X[test_index]
+    Y_train, Y_test = Y[train_index], Y[test_index]
+
+    # 训练PLS回归模型
+    pls.fit(X_train, Y_train)
+
+    # 预测测试集的Y值
+    Y_pred = pls.predict(X_test)
+
+    # 计算RMSECV
+    rmsecv = np.sqrt(mean_squared_error(Y_test, Y_pred))
+    rmsecv_list.append(rmsecv)
+
+    # 计算Q²
+    ss_tot = np.sum((Y_test - np.mean(Y_test))**2)
+    ss_res = np.sum((Y_test - Y_pred)**2)
+    q2 = 1 - ss_res / ss_tot
+    q2_list.append(q2)
+
+# 计算平均RMSECV和平均Q²
+mean_rmsecv = np.mean(rmsecv_list)
+mean_q2 = np.mean(q2_list)
+
+print(f"平均RMSECV: {mean_rmsecv:.4f}")
+print(f"平均Q²: {mean_q2:.4f}")
+```
 
 ## Interrelationships between the X and Y
 
@@ -388,6 +376,7 @@ X5        0.034774  0.916164           0.368275           0.569357
 **总结：**
 
 - **b系数**：表示每个X变量对Y变量的线性影响。
+  
   - - **数值大小**：
       
       - b系数的绝对值越大，表明该变量对响应变量（Y）的影响越大。
@@ -397,13 +386,17 @@ X5        0.034774  0.916164           0.368275           0.569357
       
       - 正号（+）：表示该变量与响应变量正相关，即自变量增加，响应变量也增加。
       - 负号（-）：表示该变量与响应变量负相关，即自变量增加，响应变量减少。
+
 - **VIP**：评估每个X变量对解释X和Y空间( X&rarr;Y即模型)的相对重要性。
+  
   - - **数值大小**：
       - VIP的值始终为正，越大表示该变量对模型的影响越大。
       - 通常：
         - VIP > 1：表示该变量对模型有较高的解释力。
         - VIP < 1：表示该变量对模型解释力较弱。
+
 - **W*-载荷**：量化X变量对潜在变量（LV）的贡献。
+  
   - - **数值大小**：
       
       - W*-载荷的绝对值越大，表示该变量对潜在变量（LV）的贡献越大。
@@ -413,13 +406,9 @@ X5        0.034774  0.916164           0.368275           0.569357
       - 正号（+）：表示该变量与潜在变量正相关。
       - 负号（-）：表示该变量与潜在变量负相关。
 
-
-
 ## Univariate analysis
 
-**关于 X 变量的单变量分析**
-
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_5VoAJn3T5l/CleanShot%202024-05-09%20at%2021.40.51@2x.png)
+**关于 X 变量的单变量分析**![](/Users/tim/Library/Application%20Support/CleanShot/media/media_5VoAJn3T5l/CleanShot%202024-05-09%20at%2021.40.51@2x.png)**1. 图1的解读**
 
 - **图1A（活细胞密度，XV）**：
   
@@ -461,16 +450,22 @@ X5        0.034774  0.916164           0.368275           0.569357
 
 
 
-
-
 ## PCA analysis
 
+<img src="Review.assets/image-20240509234739781.png" alt="image-20240509234739781" style="zoom:50%;" />
 
+该分析的主要目标是通过多元分析可视化12个输入变量的演变和相关性，并推断不同批次之间的特征模式和偏差。为了分析变化趋势，数据集按变量展开，并删除包含缺失值的行。最终得到了一个包含1,020个观测（行）和12个变量（列）的矩阵。
 
+- 图3中展示的得分图明确区分了低产量批次（菱形符号）和高产量批次（圆形符号）。
 
+- 图3中动态行为基于培养时间进行可视化，从初始条件（第0天为黑色）到最终条件（第12天为白色）。初始条件都位于一个明显的区域，接近图的原点。
 
+- 图3中高产量批次围绕原点旋转，而低产量批次则偏离它。这一趋势在支持信息图S2中也有所展示，其中前两个主成分（PC）与时间的关系进行了绘图。
 
+- 图3中PCA揭示了在低产量批次中，所有过程变量一起以一致的方式移动，并遵循与高产量批次不同的轨迹。特别是，可以使用相应的载荷图（如S2所示）识别三个特征组，分别标记为G1、G2和G3。前两个组对应于在pH 6.7以及高（70%和90%，G1）或低（10%，G2）DO条件下的实验。组G3对应于在高pH（7.2）和低DO（10%）水平下进行的实验。其余的五个低产量批次可以在靠近G3组主体区域的边界处被识别为在高pH或低DO条件下进行的分批工艺，而其他参数则保持标准条件。这意味着通过该分析，可以在单个图中揭示pH的强烈影响，尤其是pH和DO在极端条件下的组合效应。
 
+图S2考虑PC3与PC4的关系图，它们总共解释了另外24%的方差。然而，这些PC提供的信息不再反映低产量和高产量批次的不同行为，而是显示了Xv的特征演变以及压力的影响。相应的得分和载荷图可在支持信息图S2中找到。
 
+因此，PCA获得的结果不仅超越了单变量分析的发现，而且为表征X的演变并将其回归到响应Y提供了重要信息。对于具有动态行为的数据，此类分析的优势在于额外可视化特征多变量演变，这可以作为批次监测的基础。
 
-
+<img src="Review.assets/image-20240509234920382.png" alt="image-20240509234920382" style="zoom:50%;" />
