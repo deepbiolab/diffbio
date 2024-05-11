@@ -377,7 +377,11 @@ X5        0.034774  0.916164           0.368275           0.569357
 
 ## Univariate analysis
 
-**关于 X 变量的单变量分析**![](/Users/tim/Library/Application%20Support/CleanShot/media/media_5VoAJn3T5l/CleanShot%202024-05-09%20at%2021.40.51@2x.png)**1. 图1的解读**
+**关于 X 变量的单变量分析**
+
+**1. 图1的解读**
+
+![](Review-Datahow-2015-MVDA-PCA.assets/b9f80bb8d1c9b60d09945db7f3a0487fb4e34568.png)
 
 - **图1A（活细胞密度，XV）**：
   
@@ -406,7 +410,7 @@ X5        0.034774  0.916164           0.368275           0.569357
 - 通过引入滴度值的质量标准，将批次分为高滴度和低滴度两组，有助于简化分析并识别特征模式。
 - 但是经典的单变量分析表明，大多数变量的演变揭示了一些特征模式。通过引入与滴度值相关的任意质量标准简化了该分析，该标准可区分高性能和低性能批次。尽管这种经验分组有助于对工艺有一些基本的了解，但无法评估这两组中的整体变量相互作用和差异。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_DiZof5WeKU/CleanShot%202024-05-09%20at%2022.21.40@2x.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/2a488a7b0aa161dbfaa81defd46aa613e5d4b303.png)
 
 **关于 Z 变量的单变量分析**
 
@@ -419,9 +423,9 @@ X5        0.034774  0.916164           0.368275           0.569357
 
 ## PCA analysis
 
-<img src="Review.assets/image-20240509234739781.png" alt="image-20240509234739781" style="zoom:50%;" />
+![](Review-Datahow-2015-MVDA-PCA.assets/47382928dc24f7c2b36abfda2a787a8eb8be3908.png)
 
-<img src="Review.assets/image-20240509234920382.png" alt="image-20240509234920382" style="zoom:50%;" />
+![](Review-Datahow-2015-MVDA-PCA.assets/014076224707861d40a5f3b3e91b1a3a1f9cb619.png)
 
 这项分析的主要目标是通过多变量分析可视化12个输入变量之间的演变和相关性，并推断不同批次之间的特征模式和偏差。
 
@@ -552,17 +556,13 @@ plot_pca_results(X_pca, pca, variable_names)
 
 本分析的主要目标是通过PLSR（偏最小二乘回归）建模，表征12个输入变量的演变与输出变量（产品滴度）的演变之间的相互关系。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_6RgVmjGXzS/CleanShot%202024-05-10%20at%2011.05.33@2x.png)
-
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_ZfPhZsz8gP/CleanShot%202024-05-10%20at%2011.05.58.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/36a0a718a712835d64e5a31888eebcbcca117ba7.png)
 
 此外，还应评估缺失数据插补策略和低滴度批次的消除对模型性能的影响。与后者目标相关的分析在补充信息S1部分中提供。
 
 为了实现第一个目标，基于逐变量展开的数据集构建了一个PLSR模型，包括555个观测值，其中包含12个X变量和Y变量的完整信息，即所有不完整的行都被剔除。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_zPnlLXH6Pe/CleanShot%202024-05-10%20at%2013.09.35.png)
-
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_vlfeNxu0Zt/CleanShot%202024-05-10%20at%2013.09.19@2x.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/c7e42e86a1f9fcf8fd11cc8ba7a20f9b0bfcc620.png)
 
 模型质量在表1的第一行中展示。考虑到RMSECV和图1B中的滴度范围（最高0.9 g/L），预测准确性理应超出区分高和低滴度批次的可能性。然而，预测准确性明显高于实验误差（约0.030 g/, 这个值是通过重复实验的最终滴度平均标准差确定的)。
 
@@ -570,23 +570,23 @@ plot_pca_results(X_pca, pca, variable_names)
 
 然而，基于逐变量展开的数据的模型的主要特征在于其区分不同观测值的能力，具体来说是根据它们在演变中的时间位置。这一特性在过程演变监控中起到了核心作用。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_T42wsTJM3w/CleanShot%202024-05-10%20at%2013.12.35@2x.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/c9b11ca8e05af142af339ef195ab5f31bb001583.png)
 
 图4A区分了高（圆圈）和低滴度批次（菱形）在整个过程中的时间演变（通过颜色编码）。因此，图4A可以总结为该过程的**观测演变指纹图**。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_qsUCEbDTwz/CleanShot%202024-05-10%20at%2013.14.22.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/f5778f45915346bd3ea356bdcbdcd50c4eec0fb4.png)
 
 补充信息图S3显示了前两个潜在变量（LVs）的得分随时间的演变。LV1对应的图表清晰地识别出低滴度和高滴度批次的不同演变。根据响应变量的实验可及性和过程控制策略，这些结果可以作为确定相应批次控制图的基础。换句话说，虽然补充信息图S2中的PCA模型轨迹单纯由X变量之间的相互关系控制，
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_T42wsTJM3w/CleanShot%202024-05-10%20at%2013.12.35@2x.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/e0076675b6424f50a915ad6eae5692b7bb44d14b.png)
 
 但图4A和补充信息图S3中的轨迹则基于沿时间用X变量不断预测Y变量。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_lHv9sTKkZA/CleanShot%202024-05-10%20at%2013.16.10.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/caed0709d861db32c5a39cdafdcd2c51a2f7b62a.png)
 
 Chong等人得出结论认为VIP值和b系数可以互补使用，并且如果两者都很小，则可以认为某个变量对模型不重要。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_gTRWH1X63H/CleanShot%202024-05-10%20at%2013.17.21.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/2799d2f5205600d28d414ffa0bb3f4a17afdee54.png)
 
 在本例中，上述所有三种指标均显示谷氨酸、谷氨酰胺和乳酸的浓度以及活细胞密度和渗透压在滴度的整体观测演变模型中具有重要作用。这里，谷氨酰胺和谷氨酸的浓度在分析中具有很高的解释力
 
@@ -714,51 +714,49 @@ plt.show()
 
 分析了两种阶段分离：
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_O1V6ayrBjC/CleanShot%202024-05-10%20at%2013.42.02.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/d15196482e3730ef9e08eee1572327304af53a80.png)
 
 一种是基于工艺相关的分离，以葡萄糖喂料的开始时间（大约在第3天，从图1C的葡萄糖曲线中可以看出）为界，将过程分为两个阶段；
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_PDqadicgeX/CleanShot%202024-05-10%20at%2013.42.14.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/f43ed6a2b6826465e576f122158a79007ecfc187.png)
 
 另一种是基于生物学相关的分离，以从细胞生长到细胞死亡增加的转变（如图1A所示的Xv曲线的最大细胞密度）为界，将过程分为两个阶段。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_PxiFMJNcv7/CleanShot%202024-05-10%20at%2013.42.58.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/be2c8fd0b46debb644043bb41cc2322d8ec7d67d.png)
 
 表1显示，第一阶段的滴度预测精度有所提高，而第二阶段的预测精度与整体观测演变模型相似。因此，对于该过程，这种阶段分离可以有助于理解和监控**第一个阶段**。
 
 为了分析相关结构的动态变化，为每隔两天建立一个单独的PLSR模型（因为滴度通常在双日测量）。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_lntI7UpjNs/CleanShot%202024-05-10%20at%2013.46.20.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/18b8a35ae2555c4f3bebf1bbcbff8a8a209ab05d.png)
 
 表2显示，特定时间模型的准确性随着时间推移而恶化，但始终比“PLSR中的批次演变建模”部分的整体观测演变模型更好。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_NuPIIcJ6PY/CleanShot%202024-05-10%20at%2013.47.31.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/3a970bf83e7fa966f7a89f8135aa12b4d39931a4.png)
 
 这一点也反映在补充信息图S4中，比较了每个时间模型的实际和预测滴度值。时间模型中RMSECV的增加可以归因于系统方差随时间增加，
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_Ah6WqpQ4rm/CleanShot%202024-05-10%20at%2013.48.29.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/8a29ab4b1b0856e01ea7cb844ad9567039d1315b.png)
 
 从图1中的变量演变曲线以及补充信息图S1中的变量演变曲线可以明显看出。将RMSECV与该时间点的滴度范围相关联，可以得出时间分组模型的相对预测准确性相当可比。这些模型可以被视为局部瞬时模型，在每个时间点使用特征模式预测滴度。
 
 相应的变量重要性可以为每个特定时间模型进行评估，揭示基于瞬时系统特征的动态变量重要性模式。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_iE1iVW1BAV/CleanShot%202024-05-10%20at%2013.49.23.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/5890e635288167b3e989b5ce1a2d0dd7726041cc.png)
 
 图5显示了在时间特定模型中四个选定变量的VIP值与整个演变模型相比（以水平线表示）。其余的VIP图在补充信息图S5中可视化。图5A-C显示，OSM、Via和GLC等变量在解释各时间点滴度方差的重要性是可变的，并且大于这些变量在解释整个过程中的方差时的时间平均重要性。因此，将模型与整个演变过程分开有助于获取动态变量属性。
 
-<img src="file:///Users/tim/Library/Application%20Support/CleanShot/media/media_tLj59H49iR/CleanShot%202024-05-10%20at%2013.51.54.png" title="" alt="" width="380">
-
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_0oSXVjo0FE/CleanShot%202024-05-10%20at%2013.52.12.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/561855e9d4d11f34d67e3c2a401e83e8231e7e40.png)
 
 图5D和补充信息图S5显示，与时间特定模型(PLSR Time Grouping)相比，谷氨酸和谷氨酰胺的浓度在观测演变模型(Batch evolution modeling with PLSR)中更为重要。这表明， 在 PLSR Time Grouping模型即使没有这些X变量也能够解释滴度。删除这两个变量并不会显著改变时间分组模型(PLSR Time Grouping)的性能，但会显著降低观测演变模型((Batch evolution modeling with PLSR))的预测准确性和方差解释度（使用两个LVs：RMSECV = 0.185 g/L，Q2 = 0.40）。
 
 因此，这两个变量可能捕捉到系统的时间趋势。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_aclIGzchcx/CleanShot%202024-05-10%20at%2013.57.52.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/a64767aa5f68f5d4739b93068eb1b6767434f77e.png)
 
 这一点也反映在谷氨酸和谷氨酰胺的演变中（见补充信息图S1），
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_RFuksSwxBS/CleanShot%202024-05-10%20at%2013.58.24.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/95e7b5ad9f070a887f5f2c12d5365e5e282da092.png)
 
 其与滴度的演变（见图1B）非常相似。
 
@@ -877,25 +875,25 @@ plt.show()
 
 使用该完整数据集可以利用某个时间点之前的X历史数据来预测该时间点的滴度。具体来说，为每一天建立不同的PLSR模型，从初始条件开始，按顺序为每个变量增加历史数据，直到给定的一天为止。这些模型经过测试，预测从选定的天数到结束（第10天）的滴度。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_OjtxoSQELD/CleanShot%202024-05-10%20at%2014.27.30.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/59e67e6b83c0db6a8d7a99c1cc7c3e9c963cb9f5.png)
 
 表3显示了由RMSECV（A）和交叉验证解释的方差（B）代表的PLSR模型的质量。在模型开发中，最多使用10个潜在变量（LVs）作为约束。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_NA8A3oXYne/CleanShot%202024-05-10%20at%2014.27.49.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/b63229d9f61cc4c4c142b8519a637e56cb1bdf50.png)
 
 将表3中的结果与补充信息表S1（模型A3）中所呈现的对应变量展开数据的PLSR模型结果进行比较，可以发现该动态模型（其中变量之间的相关性随时间变化）在模拟最终滴度方面具有显著更高的精度（RMSECV 0.051 g/L与0.104 g/L相比），并几乎解释了滴度的全部方差（92%与65%相比）。
 
 需要注意的是，RMSECV接近工艺误差（约±0.030 g/L）。这意味着对于该数据集，预测精度无法显著提高。很容易计算得出预测的相对误差，即RMSECV与滴度的比值，
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_lEz1R9yL41/CleanShot%202024-05-10%20at%2014.31.12.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/ce76914b880a955448d32bfaf4582fe45260e6f2.png)
 
 随时间推移而不断降低，与表3中所报告的绝对误差形成对比。这表明表3中解释的方差随着时间的推移也在改善并最终停滞。当专注于预测某一天的滴度时，预测随着过程时间的增加而提高（沿着列向下移动）。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_DTHQNBWSf1/CleanShot%202024-05-10%20at%2014.31.32@2x.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/6d4cd0f5e2716f1643f4ddb1e31cde661e4cfa1e.png)
 
 表3对角线上的结果与表2中的结果有所不同。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_CbTe23gIxX/CleanShot%202024-05-10%20at%2014.40.52.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/2c0fa39eaf5219ada5c6862ed46171171552ebf0.png)
 
 一方面，表3中的模型包括了完整的历史信息，而不仅仅是考虑某个时间点的测量结果，因此可以获得更高的精度。
 
@@ -905,7 +903,7 @@ plt.show()
 
 此分析中特殊的变量排列使得可以评估动态变量重要性指纹图，即沿着历史区分的所有变量的重要性。例如，分析了包含完整历史信息的模型的重要性（基于表3中X0-10的Y10模型）。
 
-![](/Users/tim/Library/Application%20Support/CleanShot/media/media_1ajMRJ26U4/CleanShot%202024-05-10%20at%2015.13.38.png)
+![](Review-Datahow-2015-MVDA-PCA.assets/839ff0df9c6326b612cc4936694cc674b13df5c2.png)
 
 图6展示了低滴度批次（+ 号标记, 小于0.5×Titer max, day10）、高滴度批次（o号标记, 介于0.5×Titer max, day10与0.75×Titer max, day10之间）和非常高滴度批次（\*号标记, 大于0.75×Titermax, day10）的得分图。关于每个潜在变量解释的方差（在坐标轴上以括号显示），最大的可变性出现在低和（非常）高滴度批次之间，可以沿着第一个LV轴进行区分。
 
