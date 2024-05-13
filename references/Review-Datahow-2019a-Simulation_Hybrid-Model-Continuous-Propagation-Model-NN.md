@@ -207,8 +207,9 @@
       每次添加饲料后，原有的质量平衡会发生变化，需要重新计算和设定新的起点，以便于下一天的培养可以在更新后的条件下继续进行。
   - Y矩阵，尽管包含了滴度信息，但在模型计算中并未使用，因为滴度由模型直接计算，故Y矩阵扮演了数据监控而非计算的角色。
 - **数据插补**：
-  - 文中提到大约4%的数据缺失，并使用了削减分数回归(Trimmed Score Regression)算法进行数据插补，这是一种用于处理缺失数据的统计技术，以确保数据完整性，使模型预测更为准确。
-
+  
+- 文中提到大约4%的数据缺失，并使用了削减分数回归(Trimmed Score Regression)算法进行数据插补，这是一种用于处理缺失数据的统计技术，以确保数据完整性，使模型预测更为准确。
+  
 - Trimmed Score Regression: 是一种处理异常值和偏差数据的回归技术，它通过修剪（削减）部分数据点的贡献来提高统计估计的鲁棒性。此方法特别适用于数据集中存在异常值或非典型观测值时，有助于得到更为稳健的回归结果。
 
     实现Trimmed Score Regression通常涉及以下几个步骤：
@@ -338,7 +339,7 @@ for model_name, model_setup in models.items():
 
 
 
-### **Hybrid Model Design**
+## **Hybrid Model Design**
 
 当前工作采用了一种串行架构的混合建模方法（Thompson & Kramer, 1994），如图1b的示意流程图所示。代表细胞培养的方程体系是基于质量平衡建立的，如下所报告：  
 dCi/dt = μi(t)C1(t)，其中T+ ≤ t < T+1,  
@@ -359,31 +360,332 @@ Ci,init(T) = Ci(T) + Feedi(T)/V,
 下面是一个简化的Python代码示例，展示如何使用`scikit-learn`库训练一个具有正则化的简单神经网络来拟合数据：
 
 ```python
-from sklearn.neural_network import MLPRegressor
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error
+import torch
+import torch.nn as nn
+from torchdiffeq import odeint
+from sklearn.model_selection import KFold
+from torch.optim import Adam
 
-# 生成模拟数据
-X, y = make_regression(n_samples=200, n_features=10, noise=0.1)
+class RateModel(nn.Module):
+    def __init__(self, hidden_size):
+        super(RateModel, self).__init__()
+        self.fc1 = nn.Linear(8, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, 8)
 
-# 划分数据集
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    def forward(self, t, y):
+        logits = self.fc1(y)
+        rates = torch.relu(logits)
+        output = self.fc2(rates)
+        return output
 
-# 数据标准化
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+def cell_culture(t, y, model):
+    rates = model(t, y)
+    dydt = rates * y[0]  # Assuming y[0] is C1
+    return dydt
 
-# 创建并训练神经网络模型
-model = MLPRegressor(hidden_layer_sizes=(10,), activation='relu', solver='adam', alpha=0.001, max_iter=1000)
-model.fit(X_train_scaled, y_train)
+def simulate_feed_addition(y, feed_schedule, day, V):
+    # 模拟喂料，调整初始条件
+    if day in feed_schedule:
+        feed_vector = torch.tensor(feed_schedule[day], dtype=torch.float32)
+        y += feed_vector / V
+    return y
 
-# 预测和评估
-y_pred = model.predict(X_test_scaled)
-rmse = mean_squared_error(y_test, y_pred, squared=False)
-print(f"Root Mean Squared Error: {rmse}")
+def mse_loss_with_regularizer(model, X, y_true, t_span, feed_schedule, V, regularization_strength):
+    y = X.clone()
+    for i in range(1, len(t_span)):
+        day = int(t_span[i])
+        y = simulate_feed_addition(y, feed_schedule, day, V)
+        y_pred = odeint(cell_culture, y, torch.tensor([t_span[i-1], t_span[i]]), method='dopri5', args=(model,))
+        y = y_pred[-1]
+    mse_loss = torch.mean((y - y_true) ** 2)
+    l2_norm = sum(p.pow(2.0).sum() for p in model.parameters())
+    return mse_loss + regularization_strength * l2_norm
+
+# Example setup
+t_span = torch.linspace(0, 9, steps=10)  # 10 days
+X = torch.randn((8,))  # Example initial state
+y_true = torch.randn((8,))  # Example true final state
+V = 1.0  # Reactor volume
+feed_schedule = {i: [0.05] * 8 for i in range(1, 10)}  # Daily feeding
+
+# Define cross-validation
+kf = KFold(n_splits=5)
+hidden_sizes = [10, 20, 50]  # Example sizes of hidden layer
+best_loss = float('inf')
+best_model = None
+
+for train_index, test_index in kf.split(X.unsqueeze(0)):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y_true[train_index], y_true[test_index]
+    
+    for size in hidden_sizes:
+        model = RateModel(hidden_size=size)
+        optimizer = Adam(model.parameters(), lr=0.01)
+        for epoch in range(100):  # Number of epochs for demonstration
+            optimizer.zero_grad()
+            loss = mse_loss_with_regularizer(model, X_train, y_train, t_span, feed_schedule, V, 0.01)
+            loss.backward()
+            optimizer.step()
+
+        # Validate model
+        with torch.no_grad():
+            val_loss = mse_loss_with_regularizer(model, X_test, y_test, t_span, feed_schedule, V, 0.01)
+            if val_loss < best_loss:
+                best_loss = val_loss
+                best_model = model
+
+print(f"Best model with hidden size: {best_model.fc1.out_features} and loss: {best_loss}")
+
 ```
 
 在这个示例中，我们使用了`MLPRegressor`来创建一个单隐层的前馈神经网络，并通过调整正则化参数`alpha`来控制模型的复杂度，从而防止过拟合。此外，我们还使用了交叉验证来评估模型的性能。
+
+
+
+## **Black Box Model**
+
+两种统计参考模型，这些模型用于与混合模型进行性能比较。这些模型的构建基于与混合模型相同的初始信息，即在预测动态过程行为时使用的信息矩阵X（t=0）、W（t=0）、Z和F。
+
+### **BB-PLS**
+
+这里描述的第一个模型称为BB-PLS2。其中Z和初始条件（X(t=0)和W(t=0)）作为输入，而该天对应的八个目标变量作为输出。每天训练一个独立的PLS2模型。
+
+假设我们有10天的数据，并且每一天都有一个独立的输出集（八个目标变量），而输入变量包括Z、X(t=0)和W(t=0)。我们将使用假数据来演示这一过程：
+
+```python
+import numpy as np
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.metrics import mean_squared_error
+
+# 模拟数据生成
+def generate_daily_data(days, samples_per_day, input_features, output_targets):
+    Z = np.random.normal(size=(days, samples_per_day, input_features))  # Z矩阵
+    X0 = np.random.normal(size=(days, samples_per_day, input_features))  # X(t=0)初始条件
+    W0 = np.random.normal(size=(days, samples_per_day, input_features))  # W(t=0)初始条件
+    Y = np.random.normal(size=(days, samples_per_day, output_targets))  # 每天的输出目标
+    return Z, X0, W0, Y
+
+# 设定参数
+days = 10
+samples_per_day = 100
+input_features = 3
+output_targets = 8
+
+# 生成模拟数据
+Z, X0, W0, Y = generate_daily_data(days, samples_per_day, input_features, output_targets)
+
+pls_models = []
+rmse_scores = []
+
+# 每一天训练一个PLS模型
+for day in range(days):
+    # 将Z, X0, W0堆叠为一个大的输入矩阵
+    X_train = np.hstack((Z[day], X0[day], W0[day]))
+    Y_train = Y[day]
+    
+    # 创建PLS模型，假设使用2个成分
+    pls = PLSRegression(n_components=2)
+    pls.fit(X_train, Y_train)
+    pls_models.append(pls)
+    
+    # 模型评估：假设测试数据与训练数据相同（实际情况中应该用独立的测试集）
+    Y_pred = pls.predict(X_train)
+    rmse = np.sqrt(mean_squared_error(Y_train, Y_pred))
+    rmse_scores.append(rmse)
+
+    print(f"Day {day+1}, RMSE: {rmse:.4f}")
+
+# 可选：输出最佳模型的信息
+best_model_day = np.argmin(rmse_scores)
+print(f"Best model is from Day {best_model_day+1} with RMSE {rmse_scores[best_model_day]:.4f}")
+```
+
+
+
+1. **数据生成**：生成了每天的模拟数据，其中每天都有独立的输入（Z, X0, W0）和输出（Y）。
+2. **模型训练**：对每一天的数据使用PLS模型进行训练。输入矩阵由Z, X(t=0), 和W(t=0)组成，输出矩阵是当天的八个目标变量。
+3. **模型评估**：用均方根误差（RMSE）评估每个模型的预测性能。
+4. **Optimal Components Search**: For each day, the code tests different numbers of latent variables (from 1 to 10). It uses cross-validation to evaluate the performance (using RMSE) of each configuration.
+5. **Selection of Optimal Components**: The number of components that results in the lowest average RMSE across the folds is selected as the optimal for that day.
+
+
+
+
+
+### Stepwise-PLS2
+
+第二个模型，称为逐步PLS2（Stepwise-PLS2），是一个单一的PLS2模型，用于利用特定时间点T的X和W来预测目标变量的即时日变化ΔY(T)。换句话说，这个映射关系是：[X(T), W(T)] → ΔY(T) = Y(T+1) - Y(T)。这意味着时间T从第0天变化到第9天。因此，Stepwise-PLS2模型的输入和输出实质上包含了81×9（等于729）行，即81次运行乘以每次运行对应的9天时间点。但值得注意的是，在预测阶段，模型仅给定T=0时的输入。从而，如方程（5）所示，由模型预测T=1时的值，然后该值作为输入用于预测下一个时间点T=2，以此类推。其中ΔY(T)由Stepwise-PLS2模型预测。
+
+
+
+实现Stepwise-PLS2模型，并采用五折交叉验证来选择最优的潜变量数量。下面的代码示例实现了这个过程：
+
+```python
+import numpy as np
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.model_selection import KFold
+from sklearn.metrics import mean_squared_error
+
+# 模拟数据生成函数
+def generate_time_series_data(samples, days, features, targets):
+    X = np.random.normal(size=(samples, days, features))
+    Y = np.random.normal(size=(samples, days, targets))
+    return X, Y
+
+# 计算ΔY(T)
+def calculate_deltas(Y):
+    return np.diff(Y, axis=1)  # 计算沿着时间轴的差分
+
+# 数据参数
+samples = 81
+days = 10
+features = 3
+targets = 8
+
+# 生成数据
+X, Y = generate_time_series_data(samples, days, features, targets)
+Delta_Y = calculate_deltas(Y)
+
+# 模型配置和训练
+kf = KFold(n_splits=5)
+best_rmse = float('inf')
+best_n_components = 0
+
+for n_components in range(1, 11):
+    rmse_scores = []
+    
+    for train_index, test_index in kf.split(X[:, 0, :]):  # 使用第0天的数据进行交叉验证
+        X_train, X_test = X[train_index, 0, :], X[test_index, 0, :]
+        Delta_Y_train, Delta_Y_test = Delta_Y[train_index, 0, :], Delta_Y[test_index, 0, :]
+        
+        pls = PLSRegression(n_components=n_components)
+        pls.fit(X_train, Delta_Y_train)
+        Delta_Y_pred = pls.predict(X_test)
+        rmse = np.sqrt(mean_squared_error(Delta_Y_test, Delta_Y_pred))
+        rmse_scores.append(rmse)
+    
+    average_rmse = np.mean(rmse_scores)
+    if average_rmse < best_rmse:
+        best_rmse = average_rmse
+        best_n_components = n_components
+
+print(f"Best number of components: {best_n_components} with RMSE: {best_rmse:.4f}")
+
+# 使用最佳组件数重新训练模型
+pls_model = PLSRegression(n_components=best_n_components)
+pls_model.fit(X[:, 0, :], Delta_Y[:, 0, :])  # 使用全部数据重新训练
+
+# 预测每天的ΔY，并递归更新Y
+predicted_Y = np.zeros((samples, days, targets))
+predicted_Y[:, 0, :] = Y[:, 0, :]  # 初始条件
+
+for day in range(1, days):
+    # 用前一天的Y和X预测ΔY
+    Delta_Y_pred = pls_model.predict(X[:, day-1, :])
+    # 更新Y的预测值
+    predicted_Y[:, day, :] = predicted_Y[:, day-1, :] + Delta_Y_pred
+
+# 输出最终预测结果的一些示例
+print("Predicted Y for the last day (sample 1):")
+print(predicted_Y[0, -1, :])
+
+# 计算整个预测周期的总体RMSE
+total_rmse = np.sqrt(mean_squared_error(Y.reshape(-1), predicted_Y.reshape(-1)))
+print(f"Total RMSE over all days: {total_rmse:.4f}")
+```
+
+1. **数据生成**：使用生成函数创建模拟的时间序列数据X和Y。
+2. **模型训练**：使用第一天的数据训练PLS模型，目标是学习预测ΔY。
+3. **递归预测**：从第一天的实际Y值开始，使用模型预测的ΔY更新每天的Y值。
+4. **总体性能评估**：计算模型在整个预测周期中的总体RMSE，以评估模型性能。
+
+
+
+
+
+
+
+### 模型比较
+
+- **误差比较**：在比较中，混合模型显示出对于Xv、LAC和titer的最低标准化均方根预测误差（scaled RMSEP）。
+- **误差标准化**：误差是根据每个变量在所有校准运行和所有时间点的标准差进行标准化的。
+
+#### 关键变量预测表现
+
+- **Xv的预测**：
+  
+  <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231213067.png" alt="image-20240513231213067" style="zoom:50%;" />
+  
+- **混合模型**：Xv的预测标准化误差为0.3。
+  
+  - **统计模型**：预测误差约为0.45。
+  
+    <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231238210.png" alt="image-20240513231238210" style="zoom:50%;" />
+  
+  - 在绝对误差上，这分别对应于0.61和0.80×10^6 cells/ml。
+  
+- **乳酸（Lactate）浓度预测**：
+  
+  <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231333508.png" alt="image-20240513231333508" style="zoom:50%;" />
+  
+- **混合模型**：标准化误差约为0.45。
+  
+  - **BB – PLS2和Stepwise – PLS2模型**：分别为0.65和0.7的显著更高的标准化误差。
+  
+    <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231355870.png" alt="image-20240513231355870" style="zoom:50%;" />
+  
+  - 混合模型能较好地预测两个示例实验运行的实际剖面，而Stepwise – PLS2从第二天开始就无法预测实际剖面。
+  
+- **目标蛋白（titer）预测**：
+  
+  <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231456426.png" alt="image-20240513231456426" style="zoom:50%;" />
+  
+  - **混合模型**：titer的标准化RMSEP为0.2，绝对RMSEP约为46 mg/L，接近30 mg/L的预期分析误差。
+  - **BB – PLS2和Stepwise – PLS2模型**：分别产生65和55 mg/L的titer预测绝对RMSEP。
+
+#### 评价指标
+
+为了计算上述提及的两个性能指标：**标准化均方根预测误差（scaled RMSEP）**和**绝对均方根预测误差（absolute RMSEP）**，我们需要以下步骤和代码实现。这些指标常用于评估模型预测的准确性和精确性，尤其在科学和工程应用中。
+
+假设我们有模型的预测输出和真实值，以及计算RMSEP所需的每个变量的标准差。
+
+```python
+import numpy as np
+
+# 示例数据
+y_true = np.random.normal(loc=100, scale=10, size=(100, 4))  # 真实值，100个样本，4个变量
+y_pred = y_true + np.random.normal(loc=0, scale=5, size=(100, 4))  # 预测值，带有一些噪声
+
+# 计算每个变量的标准差（在所有样本上）
+std_dev = np.std(y_true, axis=0)
+```
+
+### Scaled RMSEP
+
+标准化均方根预测误差是将模型的RMSEP相对于每个目标变量的标准差进行标准化，这有助于了解模型误差相对于数据变异性的大小。
+
+```python
+def calculate_scaled_rmsep(y_true, y_pred, std_dev):
+    mse = np.mean((y_true - y_pred) ** 2, axis=0)  # 计算每个变量的均方误差
+    rmsep = np.sqrt(mse)  # 计算每个变量的均方根预测误差
+    scaled_rmsep = rmsep / std_dev  # 标准化RMSEP
+    return scaled_rmsep
+
+scaled_rmsep = calculate_scaled_rmsep(y_true, y_pred, std_dev)
+print("Scaled RMSEP:", scaled_rmsep)
+```
+
+### Absolute RMSEP
+
+绝对均方根预测误差直接计算模型预测值与真实值之间的均方根差异，它提供了一个直观的误差量度，不依赖于数据的任何标准化。
+
+```python
+def calculate_absolute_rmsep(y_true, y_pred):
+    mse = np.mean((y_true - y_pred) ** 2, axis=0)  # 计算每个变量的均方误差
+    rmsep = np.sqrt(mse)  # 计算每个变量的均方根预测误差
+    return rmsep
+
+absolute_rmsep = calculate_absolute_rmsep(y_true, y_pred)
+print("Absolute RMSEP:", absolute_rmsep)
+```
+
