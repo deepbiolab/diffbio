@@ -15,8 +15,6 @@
    - 强调了混合模型在基于模型的过程优化和实验设计中的重要作用，尤其是在治疗蛋白生产领域。
    - 混合模型的应用不仅可以提高预测的准确性，还有助于定义更为稳健的过程设计空间，减少实验需求，加速产品开发流程。
 
-
-
 ## **Introduction**
 
 **数据驱动模型（黑盒模型）：**
@@ -39,8 +37,6 @@
 
 - **数据驱动模型**以其高效和简易的特点，在数据充足且问题定义明确时非常有效，但在未探索的区域和生成新过程知识方面存在局限。
 - **基于第一原理的模型**则提供了一种基于深层物理、化学原理的可靠解决方案，适合在已知物理规律的情况下进行精确的问题处理，但其生成复杂且在某些情况下可行性受限。
-
-
 
 **混合模型概念：**
 
@@ -75,15 +71,16 @@
 - **模型构建：** 在本研究中，开发了一个基于人工神经网络（ANNs）和质量平衡方程的混合过程模型，用于预测单克隆抗体生产中间歇供料哺乳动物细胞培养生物反应器的关键状态变量的时间演变。
 - **性能评估：** 所得混合模型的性能与最新的统计模型进行了比较，包括模型的准确性、插值和外推能力，以及在过程优化和实验设计中的潜在应用。
 
-
-
 ## **Dataset**
 
 ### **Data type**
 
 - **数据来源**：本研究中开发的混合模型使用了最初由Rouiller等人（2012年）发布的细胞培养过程数据集进行测试。
+
 - **实验设计**：数据集包括81个间歇供料runs，每次run的工作体积为3.5升，持续时间为10天。实验通过操纵三种种子条件（N-1扩增过程细胞密度、持续时间和细胞年龄）和两种过程条件（pH和DO设定点）进行。
+
 - **参数变化**：
+  
   - 接种密度: 扩增N-1过程细胞密度在5.51 × 10^6至7.17 × 10^6细胞/mL之间变化。
   - 细胞年龄: 在23至35天之间变化。
   - 扩增持续时间: 为4天或5天。
@@ -91,12 +88,15 @@
   - 溶解氧（DO）设定点: 在10%至70%之间变化。
 
 - **Z矩阵**：表示所有设计条件的二维矩阵，行和列分别代表运行和操纵变量。
+  
   - A_age
   - A_dur
   - A_Density
   - DO
   - pH
+
 - **X矩阵**：表示动态变化的、非控制的过程变量（如可见细胞密度、葡萄糖浓度、乳酸、谷氨酰胺、谷氨酸和氨的浓度及渗透压），这是一个具有额外时间维度的三维矩阵。
+  
   - Vcd
   - Glc
   - Lac
@@ -104,16 +104,22 @@
   - Glu
   - NH4
   - Osm
+
 - **F矩阵**：组织在培养时间内添加到间歇供料中的不同代谢物的质量，这是一个与X矩阵维度相同的三维矩阵。
+  
   - Glc
   - Gln
   - Glu
   - Lac
+
 - **W矩阵**：建立的另一个过程信息矩阵，包括所有被控制以保持在特定设定点附近的变量，如pH、二氧化碳和氧的部分压力，这些变量每天测量。
+  
   - pH,
   - pCO2
   - pO2
+
 - **Y矩阵**：**产品滴度在0天至运行结束的交替日（即第2、4、6、8和10天）测量，对未量化的日子（即第1、3、5、7和9天）使用logistic interpolation进行估算**。
+  
   - Titer
   
   - **logistic interpolation**
@@ -129,6 +135,7 @@
     $f(x) = \frac{L}{1 + e^{-k(x-x_0)}}$
     
     其中：
+    
     - \( L \) 是曲线的最大值，
     - \( k \) 是曲线的陡峭程度，
     - \( x_0 \) 是曲线的中点。
@@ -188,8 +195,6 @@
     
     逻辑插值非常适合于那些数据随着时间（或其他因素）逐渐接近某个极限值的情况，常见于生物学和化学过程建模等领域。
 
-
-
 ### **Data type function**
 
 - **矩阵Z, X, W的功能**：
@@ -206,10 +211,11 @@
     - **新起点的设置**：
       每次添加饲料后，原有的质量平衡会发生变化，需要重新计算和设定新的起点，以便于下一天的培养可以在更新后的条件下继续进行。
   - Y矩阵，尽管包含了滴度信息，但在模型计算中并未使用，因为滴度由模型直接计算，故Y矩阵扮演了数据监控而非计算的角色。
+
 - **数据插补**：
-  
+
 - 文中提到大约4%的数据缺失，并使用了削减分数回归(Trimmed Score Regression)算法进行数据插补，这是一种用于处理缺失数据的统计技术，以确保数据完整性，使模型预测更为准确。
-  
+
 - Trimmed Score Regression: 是一种处理异常值和偏差数据的回归技术，它通过修剪（削减）部分数据点的贡献来提高统计估计的鲁棒性。此方法特别适用于数据集中存在异常值或非典型观测值时，有助于得到更为稳健的回归结果。
 
     实现Trimmed Score Regression通常涉及以下几个步骤：
@@ -271,8 +277,6 @@ print("Trimmed model params:", trimmed_model.params)
 - 削减分数回归是一种非参数方法，适用于**有较强异常值的数据集**。
 - 实际应用中可能需要根据具体情况调整削减的策略和比例。
 
-
-
 ### **Data Split and Usuage Methodology**
 
 1. **数据划分**：数据集被划分为校准集（训练集）和测试集，比例通常是80%用于训练，20%用于测试。这种划分是为了在一部分数据上训练模型，而另一部分数据用来评估模型的泛化能力。
@@ -332,12 +336,9 @@ for model_name, model_setup in models.items():
     y_pred = grid_search.predict(X_test)
     rmsep = np.sqrt(mean_squared_error(y_test, y_pred))
     print(f"{model_name} RMSEP: {rmsep:.4f}")
-
 ```
 
 这段代码使用了随机森林回归模型，它是一种广泛使用的强大的机器学习模型，适用于回归和分类问题。在实际应用中，可能需要根据具体问题调整模型类型和参数。
-
-
 
 ## **Hybrid Model Design**
 
@@ -417,7 +418,7 @@ best_model = None
 for train_index, test_index in kf.split(X.unsqueeze(0)):
     X_train, X_test = X[train_index], X[test_index]
     y_train, y_test = y_true[train_index], y_true[test_index]
-    
+
     for size in hidden_sizes:
         model = RateModel(hidden_size=size)
         optimizer = Adam(model.parameters(), lr=0.01)
@@ -435,12 +436,9 @@ for train_index, test_index in kf.split(X.unsqueeze(0)):
                 best_model = model
 
 print(f"Best model with hidden size: {best_model.fc1.out_features} and loss: {best_loss}")
-
 ```
 
 在这个示例中，我们使用了`MLPRegressor`来创建一个单隐层的前馈神经网络，并通过调整正则化参数`alpha`来控制模型的复杂度，从而防止过拟合。此外，我们还使用了交叉验证来评估模型的性能。
-
-
 
 ## **Black Box Model**
 
@@ -482,12 +480,12 @@ for day in range(days):
     # 将Z, X0, W0堆叠为一个大的输入矩阵
     X_train = np.hstack((Z[day], X0[day], W0[day]))
     Y_train = Y[day]
-    
+
     # 创建PLS模型，假设使用2个成分
     pls = PLSRegression(n_components=2)
     pls.fit(X_train, Y_train)
     pls_models.append(pls)
-    
+
     # 模型评估：假设测试数据与训练数据相同（实际情况中应该用独立的测试集）
     Y_pred = pls.predict(X_train)
     rmse = np.sqrt(mean_squared_error(Y_train, Y_pred))
@@ -500,23 +498,15 @@ best_model_day = np.argmin(rmse_scores)
 print(f"Best model is from Day {best_model_day+1} with RMSE {rmse_scores[best_model_day]:.4f}")
 ```
 
-
-
 1. **数据生成**：生成了每天的模拟数据，其中每天都有独立的输入（Z, X0, W0）和输出（Y）。
 2. **模型训练**：对每一天的数据使用PLS模型进行训练。输入矩阵由Z, X(t=0), 和W(t=0)组成，输出矩阵是当天的八个目标变量。
 3. **模型评估**：用均方根误差（RMSE）评估每个模型的预测性能。
 4. **Optimal Components Search**: For each day, the code tests different numbers of latent variables (from 1 to 10). It uses cross-validation to evaluate the performance (using RMSE) of each configuration.
 5. **Selection of Optimal Components**: The number of components that results in the lowest average RMSE across the folds is selected as the optimal for that day.
 
-
-
-
-
 ### Stepwise-PLS2
 
 第二个模型，称为逐步PLS2（Stepwise-PLS2），是一个单一的PLS2模型，用于利用特定时间点T的X和W来预测目标变量的即时日变化ΔY(T)。换句话说，这个映射关系是：[X(T), W(T)] → ΔY(T) = Y(T+1) - Y(T)。这意味着时间T从第0天变化到第9天。因此，Stepwise-PLS2模型的输入和输出实质上包含了81×9（等于729）行，即81次运行乘以每次运行对应的9天时间点。但值得注意的是，在预测阶段，模型仅给定T=0时的输入。从而，如方程（5）所示，由模型预测T=1时的值，然后该值作为输入用于预测下一个时间点T=2，以此类推。其中ΔY(T)由Stepwise-PLS2模型预测。
-
-
 
 实现Stepwise-PLS2模型，并采用五折交叉验证来选择最优的潜变量数量。下面的代码示例实现了这个过程：
 
@@ -553,17 +543,17 @@ best_n_components = 0
 
 for n_components in range(1, 11):
     rmse_scores = []
-    
+
     for train_index, test_index in kf.split(X[:, 0, :]):  # 使用第0天的数据进行交叉验证
         X_train, X_test = X[train_index, 0, :], X[test_index, 0, :]
         Delta_Y_train, Delta_Y_test = Delta_Y[train_index, 0, :], Delta_Y[test_index, 0, :]
-        
+
         pls = PLSRegression(n_components=n_components)
         pls.fit(X_train, Delta_Y_train)
         Delta_Y_pred = pls.predict(X_test)
         rmse = np.sqrt(mean_squared_error(Delta_Y_test, Delta_Y_pred))
         rmse_scores.append(rmse)
-    
+
     average_rmse = np.mean(rmse_scores)
     if average_rmse < best_rmse:
         best_rmse = average_rmse
@@ -599,43 +589,37 @@ print(f"Total RMSE over all days: {total_rmse:.4f}")
 3. **递归预测**：从第一天的实际Y值开始，使用模型预测的ΔY更新每天的Y值。
 4. **总体性能评估**：计算模型在整个预测周期中的总体RMSE，以评估模型性能。
 
-
-
-
-
-
-
-### 模型比较
+## 模型比较
 
 - **误差比较**：在比较中，混合模型显示出对于Xv、LAC和titer的最低标准化均方根预测误差（scaled RMSEP）。
 - **误差标准化**：误差是根据每个变量在所有校准运行和所有时间点的标准差进行标准化的。
 
-#### 关键变量预测表现
+### 关键变量预测表现
 
 - **Xv的预测**：
   
   <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231213067.png" alt="image-20240513231213067" style="zoom:50%;" />
-  
+
 - **混合模型**：Xv的预测标准化误差为0.3。
   
   - **统计模型**：预测误差约为0.45。
-  
+    
     <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231238210.png" alt="image-20240513231238210" style="zoom:50%;" />
   
   - 在绝对误差上，这分别对应于0.61和0.80×10^6 cells/ml。
-  
+
 - **乳酸（Lactate）浓度预测**：
   
   <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231333508.png" alt="image-20240513231333508" style="zoom:50%;" />
-  
+
 - **混合模型**：标准化误差约为0.45。
   
   - **BB – PLS2和Stepwise – PLS2模型**：分别为0.65和0.7的显著更高的标准化误差。
-  
+    
     <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231355870.png" alt="image-20240513231355870" style="zoom:50%;" />
   
   - 混合模型能较好地预测两个示例实验运行的实际剖面，而Stepwise – PLS2从第二天开始就无法预测实际剖面。
-  
+
 - **目标蛋白（titer）预测**：
   
   <img src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/image-20240513231456426.png" alt="image-20240513231456426" style="zoom:50%;" />
@@ -643,7 +627,7 @@ print(f"Total RMSE over all days: {total_rmse:.4f}")
   - **混合模型**：titer的标准化RMSEP为0.2，绝对RMSEP约为46 mg/L，接近30 mg/L的预期分析误差。
   - **BB – PLS2和Stepwise – PLS2模型**：分别产生65和55 mg/L的titer预测绝对RMSEP。
 
-#### 评价指标
+## 评价指标
 
 为了计算上述提及的两个性能指标：**标准化均方根预测误差（scaled RMSEP）**和**绝对均方根预测误差（absolute RMSEP）**，我们需要以下步骤和代码实现。这些指标常用于评估模型预测的准确性和精确性，尤其在科学和工程应用中。
 
@@ -688,4 +672,114 @@ def calculate_absolute_rmsep(y_true, y_pred):
 absolute_rmsep = calculate_absolute_rmsep(y_true, y_pred)
 print("Absolute RMSEP:", absolute_rmsep)
 ```
+
+
+
+## 模型鲁棒性
+
+以下是对Stepwise-PLS2和BB-PLS2模型鲁棒性的评估概述：
+
+![](Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/4587cd1d6f416487b6160edea2901b936b6e6164.png)
+
+- **整体性能**：从图2a中观察到的跨所有天数的平均RMSEP来看，Stepwise–PLS2和BB–PLS2的整体性能相当。
+- **时间解析的标准化RMSEP**：
+  
+  ![](Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/8747ebe827001ea93da3524a38a6d4b4af983c05.png)
+  - **BB–PLS2(红色 bar)**：在培养初期，BB-PLS2模型相较于混合模型和Stepwise-PLS2模型展现出更好的预测性能。然而，随着时间的推移，其错误显著增加，超过了其他两个模型的RMSEP。
+  - **混合模型和Stepwise-PLS2**：这两个模型使用单一模型估计所有变量的动态演变，因此它们的标准化RMSEP在培养初期并不特别小，而是相对均匀分布，因为这两个模型在通用模型框架下捕捉了特定时间的影响。
+
+- **模型本质差异**：BB-PLS2模型仅使用初始条件和过程操作条件来估计不同时间点的浓度。因此，这些模型可以很好地估计从培养开始的几天内的状态变量，**但由于它们没有关于系统整体动态演变的信息，因此无法对更长时间的行为进行外推**。
+- **累积误差**：相比之下，混合模型和Stepwise-PLS2**在预测某一时间的浓度时，会基于前一时间点的估计值，因此相关误差会随时间累积**，如图3所示的滴定和乳酸（LAC）浓度。
+
+通过比较这些模型，可以看出虽然BB-PLS2在早期可能表现较好，但其缺乏动态系统信息导致长期预测能力较弱。相对地，混合模型和Stepwise-PLS2虽然在开始阶段性能不突出，但由于更好地捕捉了时间效应，使得其长期性能更为均衡和可靠.
+
+
+
+### 插值能力和灵活性
+
+#### 模型对葡萄糖预测的比较
+
+- **模型精度**：在预测葡萄糖浓度方面，所有考虑的模型显示出相似的整体精度。
+  
+  ![](Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/88e2711590078369adc52dc3d21d0348b935790e.png)
+- **处理动态的差异**：如图4a所示，不同模型处理过程中的葡萄糖动态的方式显著不同，这提供了一个评价这些模型潜力的有趣机会。
+
+#### 模型功能对比
+
+- **统计模型的局限**：
+  - 统计模型无法访问、学习以及预测测量点之间发生的系统变化。
+- **混合模型的优势**：
+  - 混合模型具有坚实的机械原理框架，允许它预测测量点之间系统的近实际状态。
+  - 基于质量平衡方程，因此在喂料条件中，这些都被混合模型考虑在内。
+    
+    <img title="" src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/6f75f2d4eb410529323cb9ee9acdf2f7e4788fcf.png" alt="" width="324">
+  - 从第三天开始，正确预测每天葡萄糖浓度的连续下降，而统计模型则显示葡萄糖浓度上升。
+
+#### 实际应用场景
+
+- **过程模拟的应用**：
+  - 当涉及到使用这些模型进行过程模拟时，混合模型相较于统计模型显示出更好的插值和外推能力，这在实际应用中具有重要的影响。
+    
+    <img title="" src="Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/9d7da00c1c8375b9902b052aa594df2bb3ad0f85.png" alt="" width="317">
+  - 如图4b所示，与图4a中展示的相同实验运行相比，模拟运行采用了不同的喂料策略。
+  - 对于喂料方案中的微妙变化，如添加的喂料浓度，统计模型无法考虑这些变化，而混合模型则能够以物理相关的方式区分不同的喂料策略。
+
+- **混合模型的灵活性**：
+  - 与需要严格时间对齐所有测量的统计模型不同，混合模型可以在过程动态的任何时间点提供估计。
+
+
+
+
+
+### 工艺外推和优化
+
+以下是生物制药过程开发中的关键目标之一-确定可以最大化生产力的过程条件和喂料策略
+
+#### 工艺探索的挑战
+
+- **成本和时间问题**：实验方式探索大量可能的操作条件及其组合会涉及高成本和长时间。
+- **数学模型的便利性**：使用基于合适数学模型的体外（in-silico）实验更为方便，有助于适当缩小最优设计参数空间。
+
+#### 模型可靠性的必要性
+
+- **预测未探索性能**：确保模型可靠性尤为重要，特别是在预测实验未曾探索过的过程性能方面。
+
+#### 模型性能的量化展示
+
+- **培养结果的训练与测试**：三种模型都在最终滴定低于580 mg/L的实验中进行训练，并在滴定高于580 mg/L的实验中进行测试。
+- **数据集划分**：选择的截断点使得至少50%的数据集（41次运行）可以用于训练模型。
+
+#### 不同模型的比较
+
+![](Review-Datahow-2019a-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN.assets/bb5d902570a7586f9f579a2552565e121ebf452d.png)
+
+- **预测高滴定实验**：如图5a所示，与其他模型相比，混合模型在预测四个关键变量（Xv、GLC、LAC和滴定）时显示出最小的误差。
+- **误差增加**：与图2a相比，混合模型的标准化RMSEP增加了5-10%。例如，Xv的误差从0.3增加到0.35，滴定的误差从0.2增加到0.3。
+- **统计模型的误差**：BB–PLS2和Stepwise–PLS2模型在滴定预测中的误差分别为45-50%，而在乳酸预测中的误差高达65%和80%。
+
+- **模型外推能力**：与BB–PLS2和Stepwise–PLS2模型相比，混合模型能够合理地良好地外推超出训练区域。**这从其预测高滴定运行的Xv剖面的能力可以看出**。
+- **模型训练基础的局限**：BB–PLS2和Stepwise–PLS2在低滴定运行上训练，无法准确预测高滴定运行的Xv。
+
+
+
+### 讨论
+
+#### 模型的局限与潜力
+
+- **动态理解的不足**：对细胞培养动态的不完全理解限制了基于第一性原理模型（FPMs）的进展。
+- **统计模型的局限**：仅基于数据的统计模型只能在已经实验研究过的操作条件范围内表现良好。
+- **准确的过程模型需求**：重要的是拥有能准确预测并能超出训练条件外推的过程模型。
+
+#### 混合模型的应用
+
+- **准确性与预测能力**：本研究展示了混合建模方法在此方向的潜力，特别是在商业单克隆抗体的间歇式（fed-batch）生产中，混合模型提供了包括代谢物浓度、可行细胞密度和滴定在内的几个关键变量的更准确预测。
+- **插值和外推能力**：与统计模型相比，混合模型展示了良好的插值和外推能力，统计模型在时间对齐和训练操作区域之外的预测方面存在固有限制。
+- **模型基于的机理**：这些结果是基于基于非常简单的质量平衡方程的机理框架获得的，尽管建模努力适度，但足以生成一个能够仅基于初始条件和过程操作条件预测过程变量和滴定完整演变的混合模型。
+
+#### 混合模型的局限和未来发展
+
+- **模型训练时间**：混合模型的一个重要局限是模型训练所需时间，这涉及到在模型优化的每次迭代中解决大系统的微分方程。
+- **计算需求**：对于复杂情况，这需要多个CPU以获得合理的计算时间。
+- **算法和技术的改进**：为克服这一缺点，需要考虑更高效的算法和数值技术。这将使得在混合模型的机理框架中使用更复杂的FPMs，以进一步提高其性能。
+
 
