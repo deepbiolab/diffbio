@@ -138,7 +138,7 @@
 
   <img src="Review-Datahow-2022-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN-V2.assets/image-20240519173359759.png" alt="image-20240519173359759" style="zoom:25%;" />
 
-##### 模型训练和测试
+##### 数据集和测试集
 - 使用拉丁超立方（LHC）采样设计生成不同运行数量的数据集
 
 - 四个独立测试数据集（图1B总结）
@@ -176,7 +176,9 @@
 
 后者表现为**中等的GLC和NH4值**，**OSM减少**和**LAC消耗**，一般对应于**较高的Xv和产量**。在本案例研究中，**我们在第一组（即蓝色曲线，24个实验）上训练模型**，**并添加第二组中的五个实验（即黄色曲线）**，**然后测试模型在第二组剩余51个实验（即红色曲线）上的性能**。这五个实验（黄色表示）被**选择为实验之间的成对距离**（使用所有信息矩阵创建的批量展开数据计算）**最大化**。其目的是展示如何利用具有特定过程行为（由于某种代谢状态或产品类型）的系统中创建的知识来最小化新系统所需的数据量。
 
-#### 数据集和测试集
+
+
+##### 数据集和测试集
 
 <img src="Review-Datahow-2022-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN-V2.assets/image-20240519175714064.png" alt="image-20240519175714064" style="zoom:50%;" />
 
@@ -196,4 +198,60 @@
   - 选择五个实验使实验之间的成对距离最大化
 
 - 展示如何利用具有特定过程行为的系统中创建的知识来最小化新系统所需的数据量
+
+
+
+### 模型
+
+考虑了七种可能的混合模型，这些模型的混合度范围从0%（数据驱动）到100%（机械模型），如表1所示。
+
+<img src="Review-Datahow-2022-Simulation_Hybrid-Model-Continuous-Propagation-Model-NN-V2.assets/CleanShot 2024-05-21 at 14.19.51.png" alt="CleanShot 2024-05-21 at 14.19.51" style="zoom:50%;" />
+
+当混合度从0%增加到100%时，混合模型中显式描述的基础现象的数量也增加，因此最一般的假设和现象首先被描述。
+
+#### 模型类型
+
+- BWU-PLS1模型,纯粹的数据驱动模型（0%混合）没有包含任何现象，因此尝试直接预测过程变量。
+- Hybrid-No Mass Balance（Hyb-No MB）模型通过使用数据驱动模型（DD）建模积累率，添加了第一个知识片段。因此，神经网络（NN）学习速率方程右侧的全部内容，用常微分方程（ODEs）表示。换句话说，NN必须学习质量平衡（或保持质量守恒）的关系。
+- Hybrid（Hyb）模型，通过考虑不同过程变量从生物反应器的流入和流出，显式地说明了质量平衡。因此，它只学习系统中不同过程变量的消耗（或生产）速率，而不是像Hyb-No MB模型那样学习整个质量平衡。
+- Hybrid Rate（HR）模型编码反应速率与Xv的比例。因此，它只学习细胞特异性的消耗（或生产）速率。此外，已知细胞生长并随后死亡。因此，可以进一步将细胞特异性速率学习为细胞生长和死亡的特定速率。
+- Hybrid Xv Decomposition（HXD）模型中进一步将细胞特异性速率学习为细胞生长和死亡的特定速率，其中NN分别学习特定的生长和死亡速率（表1中的NN1a，NN1b）。
+- Hybrid All Decomposition（HAD）模型进一步引入了细胞独立的代谢物消耗/生产动力学途径，从而增加了混合度, 因为HR和HXD模型**基于的假设**仅限于代谢物与可行细胞密度成比例，而实际上，代谢物通过不依赖于可行细胞密度的途径进行动力学消耗（或生产）也是可能的（例如，谷氨酰胺直接降解为氨）。HAD模型考虑了代谢物反应生产或消耗项的两个贡献：（i）与可行细胞直接相关的消耗或生产，（ii）通过与可行细胞密度无直接关系的其他途径的消耗或生产。
+- 100%混合是机械模型（Mech），它用经验方程（如Monod动力学抑制）替换了HAD模型中的NN，用于特定的细胞生长和死亡速率。
+
+#### 模型特征总结表
+
+| 模型      | 显式添加的机制       | 方程                                                         | 输入到DD模型                          |
+| --------- | -------------------- | ------------------------------------------------------------ | ------------------------------------- |
+| BWU-PLS1  |                |                                   | $Z, X(t-1), W(t-1), F(t-1)$         |
+| Hyb-No MB | 累积率               | $\frac{dx_i}{dt} = NN_i$                                   | $Z, X(t), W(t), F(t)$               |
+| Hyb       | 质量平衡             | $\frac{dx_i}{dt} = NN_i + In_i - Out_i$                    | $Z, X(t), W(t)$                     |
+| HR        | 特定速率             | $\frac{dx_i}{dt} = NN_i \cdot X_v + In_i - Out_i$          | $Z, X[\text{except } X_v](t), W(t)$ |
+| HXD       | 特定Xv生长和死亡速率 | $\frac{dX_v}{dt} = NN_{1a} \cdot X_v - NN_{1b} \cdot X_v$  $\frac{dx_i}{dt} = NN_i \cdot X_v + In_i - Out_i$ | $$Z, X[\text{except } X_v](t), W(t)$$ |
+| HAD       | 动力学项             | $\frac{dX_v}{dt} = NN_{1a} \cdot X_v - NN_{1b} \cdot X_v$  $\frac{dx_i}{dt} = NN_i \cdot X_v + NN_b + In_i - Out_i$ | $Z, X[\text{except } X_v](t), W(t)$ |
+| Mech      | 单德动力学方程       | $一系列经验方程$                                           | $(一系列输入)$                      |
+
+#### 数据驱动模型
+
+1. **BB-PLS1**
+   - **模型概述**: 连接过程条件 $ Z $ 和初始条件 $ X(t=0) $ 与不同时间点的过程变量浓度。
+   - **训练公式**: $[Z, X(t = 0)] \rightarrow PLS1_{i, t} \rightarrow X_i(t = t_{model})$
+2. **BWU-PLS1**
+   - **模型概述**: 每个时间点每个过程变量开发不同的PLS1模型，使用直到该时间点的过程条件和历史信息预测过程变量。
+   - **训练公式**: $[Z, X(t < t_{model})] \rightarrow PLS1_{i, t} \rightarrow X_i(t)$​
+   - **测试公式**: $[Z, X(t = 0), X^{predicted}(t < t_{model})] \rightarrow PLS1_{i, t} \rightarrow X_i(t=t_{model})$
+3. **ANN**
+   - **模型概述**: 使用每个时间点的过程条件和前一时间点的过程变量预测给定时间点的过程变量。
+   - **训练公式**: $[Z, X(t = t_{model} - 1)] \rightarrow ANN_{i, t} \rightarrow X_i(t = t_{model})$​
+   - **测试公式**: $[Z, \hat{X}(t = t_{model} - 1)] \rightarrow ANN_{i, t} \rightarrow X_i(t = t_{model})$
+4. **OWU-ANN**
+   - **模型概述**: 与ANN类似，但VWU-ANN为所有时间点使用单一模型。
+   - **训练公式**: $[Z, X(t = t_{model} - 1)] \rightarrow ANN_i \rightarrow X_i(t = t_{model})$​
+   - **测试公式**: $[Z, \hat{X}(t = t_{model} - 1)] \rightarrow ANN_i \rightarrow X_i(t = t_{model})$
+
+
+
+
+
+
 
