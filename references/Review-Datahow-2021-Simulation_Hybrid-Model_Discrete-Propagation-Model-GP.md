@@ -86,50 +86,50 @@
 
 ### Dataset
 
-在过程开发中，目标是找到能够在短时间内持续生产高质量滴度（产品浓度）的工艺条件 $ \mathbf{E} $，例如温度、初始浓度等。为了有效支持新产品的过程开发，我们需要一个模型能够预测未知过程条件 $ \mathbf{E}' $ 下的系统行为，以便用于过程优化。
+在过程开发中，目标是找到能够在短时间内持续生产高质量滴度（产品浓度）的工艺条件$\mathbf{E}$，例如温度、初始浓度等。为了有效支持新产品的过程开发，我们需要一个模型能够预测未知过程条件$\mathbf{E}'$下的系统行为，以便用于过程优化。
 
-系统行为表示为一个浓度矩阵 $ \mathbf{M}' \in \mathbb{R}^{N_{\text{time}} \times N_Q} $，其中：
+系统行为表示为一个浓度矩阵$\mathbf{M}' \in \mathbb{R}^{N_{\text{time}} \times N_Q}$，其中：
 
-- $ N_Q $ 是相关量的数量，如下所示：
-  $$
+- $N_Q$是相关量的数量，如下所示：
+ $$
   N_Q = 6 \quad \\
   (\text{include: Viable Cell Density (VCD), Glucose, Glutamine, Ammonia, Lactate 和 Titer})
-  $$
+ $$
   
-- $ N_{\text{time}} $ 是时间点的数量：
-  $$
+- $N_{\text{time}}$是时间点的数量：
+ $$
   N_{\text{time}} = 14
-  $$
+ $$
 
-为了创建这样的模型，可以使用过去为不同产品 $ N_{\text{prods}} $ 生成的 $ N_E $ 次实验运行的数据。对于每次运行 $ i \in \{1, \ldots, N_E\} $，已知过程条件 $ \mathbf{E}_i $ 和产品 $ p_i \in \{1, \ldots, N_{\text{prods}}\} $ 以及浓度矩阵 $ \mathbf{M}_i \in \mathbb{R}^{N_{\text{time}} \times N_Q} $。
+为了创建这样的模型，可以使用过去为不同产品$N_{\text{prods}}$生成的$N_E$次实验运行的数据。对于每次运行$i \in \{1, \ldots, N_E\}$，已知过程条件$\mathbf{E}_i$和产品$p_i \in \{1, \ldots, N_{\text{prods}}\}$以及浓度矩阵$\mathbf{M}_i \in \mathbb{R}^{N_{\text{time}} \times N_Q}$。
 
 定义：
 
-- **浓度矩阵** $ \mathbf{M}_i $：
-  $$
+- **浓度矩阵**$\mathbf{M}_i$：
+ $$
   \mathbf{M}_i = \begin{bmatrix}
   m_{i,1,1} & m_{i,1,2} & \cdots & m_{i,1,N_Q} \\
   m_{i,2,1} & m_{i,2,2} & \cdots & m_{i,2,N_Q} \\
   \vdots & \vdots & \ddots & \vdots \\
   m_{i,N_{\text{time}},1} & m_{i,N_{\text{time}},2} & \cdots & m_{i,N_{\text{time}},N_Q} \\
   \end{bmatrix}
-  $$
+ $$
   
-- **过程条件** $ \mathbf{E}_i $：
+- **过程条件**$\mathbf{E}_i$：
 
   表示每次实验运行的具体条件，如温度、初始浓度等。
 
-- **产品身份** $ p_i $：
+- **产品身份**$p_i$：
 
   表示每个数据点所属的产品。
 
-目标是通过模型预测在新的过程条件 $ \mathbf{E}' $ 下系统的行为，表示为：
+目标是通过模型预测在新的过程条件$\mathbf{E}'$下系统的行为，表示为：
 
 $$
 \mathbf{M}' = f(\mathbf{E}')
 $$
 
-模型的优化目标是找到最优的过程条件 $ \mathbf{E}^* $，使得高质量滴度 $ \mathbf{T} $ 最大化：
+模型的优化目标是找到最优的过程条件$\mathbf{E}^*$，使得高质量滴度$\mathbf{T}$最大化：
 $$
 \mathbf{E}^* = \arg\max_{\mathbf{E}} \mathbf{T}(\mathbf{E})
 $$
@@ -142,7 +142,7 @@ $$
 
 ### 混合回归模型
 
-动态浓度演变的建模受到理想混合反应器的动态物料平衡的启发。具体地，通过时间离散化，我们对训练集中的每个实验 $ i \in \{1, \ldots, N_E\} $​​ 中:
+动态浓度演变的建模受到理想混合反应器的动态物料平衡的启发。具体地，通过时间离散化，我们对训练集中的每个实验$i \in \{1, \ldots, N_E\}$​​ 中:
 
 #### 训练
 
@@ -152,54 +152,52 @@ $$
   前后两个等间隔时刻测量之间的浓度变化斜率进行近似，如下所示：
   
   - Consumption variable
-  
-  
   $$
-  \frac{dM^i}{dt}=-k(\mathrm{M}^i)\\
-  -k(\mathrm{M}^i) = \frac{dM^i}{dt}  \\
-  y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt}  \\
-  \text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \bold{-} \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
+   \frac{dM^i}{dt}=-k(\mathrm{M}^i)\\
+   -k(\mathrm{M}^i) = \frac{dM^i}{dt}  \\
+   y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt}  \\
+   \text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \bold{-} \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
   $$
   - Increation variable
-      $$
-      \frac{\mathrm{dM}^i}{\mathrm{dt}}=k(\mathrm{M}^i)\\
-      k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}} \\
-      y_{t}^i := k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}}  \\
-      \text{where }\frac{\mathrm{dM}^i}{\mathrm{dt}} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
-      $$
+  $$
+   \frac{\mathrm{dM}^i}{\mathrm{dt}}=k(\mathrm{M}^i)\\
+   k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}} \\
+   y_{t}^i := k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}}  \\
+   \text{where }\frac{\mathrm{dM}^i}{\mathrm{dt}} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
+  $$
       
   
   其中:
   
-  - $ M_{t}^i \in \mathbb{R}^{N_Q} $ 是在时间 $ t $ 的测量向量，
-  - $ \Delta t $​​ 是两个测量之间的时间间隔。
-  - **$\Delta F_{t+{\Delta t}}$是离线检测完后,立马发生的补料动作,从数据的形式上,其时间与当前时刻 $t$​​的离线检测状态变量位于相同行**, 注意此处为质量, 不是浓度
+  - $M_{t}^i \in \mathbb{R}^{N_Q}$是在时间$t$的测量向量，
+  - $\Delta t$​​ 是两个测量之间的时间间隔。
+  - **$\Delta F_{t+{\Delta t}}$是离线检测完后,立马发生的补料动作,从数据的形式上,其时间与当前时刻$t$​​的离线检测状态变量位于相同行**, 注意此处为质量, 不是浓度
   - $-k(\mathrm{M}^i)$表示浓度$i$处于消耗状态
   - $k(\mathrm{M}^i)$表示浓度$i$处于增加状态
-  - $y_{t}^i$ 是表示浓度$i$的速率,用于建模中的标签
+  - $y_{t}^i$是表示浓度$i$的速率,用于建模中的标签
   
 - 有补料, 以某个浓度$i$的消耗为例:
-  $$
+ $$
   \frac{dM^i}{dt}=-k(\mathrm{M}^i) + \text{feed rate} \\
   \frac{dM^i}{dt}=-k(\mathrm{M}^i) + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t} \\
   -k(\mathrm{M}^i) = \frac{dM^i}{dt} - \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
   y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt} + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
   \text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t} \\
   y^i_t = \frac{M_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} - M_t \cdot V_t}{V_t \cdot \Delta t} - \frac{\Delta F_{t+{\Delta{t}}}}{V_t \cdot \Delta t}
-  $$
+ $$
 
 
   其中:
 
-  -  $ \Delta F_{t+{\Delta{t}}} \in \mathbb{R}^{N_Q} $ 是由于在时间 $t$ 进料引起的质量变化向量, 在我们的实验中，我们有葡萄糖和谷氨酰胺进料，因此向量 $ \Delta F $ 只有在对应于这两种物质的位置上有非零条目
-  - $ V_t \in \mathbb{R}^+ $​ 是离散时间点的体积
-  - 补料 $ \Delta F_{t+{\Delta{t}}} $ 对浓度的影响体现在时刻 $ t+{\Delta{t}} $ 的浓度测量中，但在训练模型时，我们希望将这种影响分离出来，以更准确地捕捉系统的动力学特性。
+  - $\Delta F_{t+{\Delta{t}}} \in \mathbb{R}^{N_Q}$是由于在时间$t$进料引起的质量变化向量, 在我们的实验中，我们有葡萄糖和谷氨酰胺进料，因此向量$\Delta F$只有在对应于这两种物质的位置上有非零条目
+  - $V_t \in \mathbb{R}^+$​ 是离散时间点的体积
+  - 补料$\Delta F_{t+{\Delta{t}}}$对浓度的影响体现在时刻$t+{\Delta{t}}$的浓度测量中，但在训练模型时，我们希望将这种影响分离出来，以更准确地捕捉系统的动力学特性。
 
   
 
 ##### INPUT
 
-通过将步骤开始时的浓度 $ M_{t}^i $ 与实验设计中获得的额外特征（如反应器温度和pH值） $ \text{ExtraFeatures}(E_i) \in \mathbb{R}^k $ 连接起来，构建特征向量 $ x_{t}^i $​​。对于训练集中的所有实验，这样做后我们得到矩阵：
+通过将步骤开始时的浓度$M_{t}^i$与实验设计中获得的额外特征（如反应器温度和pH值）$\text{ExtraFeatures}(E_i) \in \mathbb{R}^k$连接起来，构建特征向量$x_{t}^i$​​。对于训练集中的所有实验，这样做后我们得到矩阵：
 $$
 X \in \mathbb{R}^{(N_E \cdot N_{\text{time}}) \times (N_Q + k)} \\
 Y \in \mathbb{R}^{(N_E \cdot N_{\text{time}}) \times N_Q}
@@ -208,7 +206,7 @@ $$
 
 ##### Modelling
 
-使用$X, Y$, 训练任意回归模型 $ \Phi : \mathbb{R}^{N_Q + k} \rightarrow \mathbb{R}^{N_Q} $，该模型描述了反应器类比中的反应动力学。
+使用$X, Y$, 训练任意回归模型$\Phi : \mathbb{R}^{N_Q + k} \rightarrow \mathbb{R}^{N_Q}$，该模型描述了反应器类比中的反应动力学。
 
 
 
@@ -216,7 +214,7 @@ $$
 
 - 无补料
 
-对于未知实验条件 $ E' $​​ 的预测如下所示：
+对于未知实验条件$E'$​​ 的预测如下所示：
 $$
 M'_0 = \text{InitialConcentration}(E') \\
 M'_{t+{\Delta{t}}} = M'_t + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta t
@@ -224,11 +222,11 @@ $$
 
 - 有补料
     - 质量版本
-    $$
+   $$
     M'_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} = [M'_t + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta t] \cdot V_t + \Delta F_{t+{\Delta{t}}} \\
-    $$
+   $$
 	- 浓度版本
-	    $$
+	$$
 	    M'_{t+{\Delta{t}}} = \left( M'_t  + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta{t} \right) \cdot \frac{V_t}{V_{t+{\Delta{t}}}} + \frac{\Delta F_{t+{\Delta{t}}}}{V_{t+{\Delta{t}}}} \\
 	    M'_{t+{\Delta{t}}} = \left( M'_t \cdot \frac{1}{\Delta{t}}  + \Phi((M'_t, \text{ExtraFeatures}(E')))  \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \cdot V_t + \frac{\Delta{t}}{V_{t+{\Delta{t}}}}\frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}} \\
 	    M'_{t+{\Delta{t}}} = \left( M'_t \cdot V_t \cdot \frac{1}{\Delta{t}} + \left( M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}} - M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}} \right) + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot V_t + \frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}} \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \\
@@ -238,10 +236,10 @@ $$
 	    M'_{t+{\Delta{t}}} =  M'_t + \left( \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot V_t + \frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}}  - \left( M'_t \cdot \frac{V_{t+{\Delta{t}}} - V_t}{\Delta{t}}  \right) \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \\
 	    \text{short for:} \\
 	    c(t_{i+1}) = c(t_i) + \left( GP(s) \cdot V + u_f - c(t_i) \cdot \frac{dV}{dt} \right) \cdot \frac{t_{i+1} - t_i}{V}
-	    $$
+	$$
 	    
 
-在我们的实验中，我们有葡萄糖和谷氨酰胺进料，因此向量 $ \Delta F $​ 只有在对应于这两种物质的位置上有非零条目。
+在我们的实验中，我们有葡萄糖和谷氨酰胺进料，因此向量$\Delta F$​ 只有在对应于这两种物质的位置上有非零条目。
 
 
 
