@@ -91,30 +91,30 @@
 系统行为表示为一个浓度矩阵$\mathbf{M}' \in \mathbb{R}^{N_{\text{time}} \times N_Q}$，其中：
 
 - $N_Q$是相关量的数量，如下所示：
- $$
-  N_Q = 6 \quad \\
-  (\text{include: Viable Cell Density (VCD), Glucose, Glutamine, Ammonia, Lactate 和 Titer})
- $$
-  
+$$
+N_Q = 6 \quad \\
+(\text{include: Viable Cell Density (VCD), Glucose, Glutamine, Ammonia, Lactate 和 Titer})
+$$
+
 - $N_{\text{time}}$是时间点的数量：
- $$
-  N_{\text{time}} = 14
- $$
+$$
+N_{\text{time}} = 14
+$$
 
 为了创建这样的模型，可以使用过去为不同产品$N_{\text{prods}}$生成的$N_E$次实验运行的数据。对于每次运行$i \in \{1, \ldots, N_E\}$，已知过程条件$\mathbf{E}_i$和产品$p_i \in \{1, \ldots, N_{\text{prods}}\}$以及浓度矩阵$\mathbf{M}_i \in \mathbb{R}^{N_{\text{time}} \times N_Q}$。
 
 定义：
 
 - **浓度矩阵**$\mathbf{M}_i$：
- $$
-  \mathbf{M}_i = \begin{bmatrix}
-  m_{i,1,1} & m_{i,1,2} & \cdots & m_{i,1,N_Q} \\
-  m_{i,2,1} & m_{i,2,2} & \cdots & m_{i,2,N_Q} \\
-  \vdots & \vdots & \ddots & \vdots \\
-  m_{i,N_{\text{time}},1} & m_{i,N_{\text{time}},2} & \cdots & m_{i,N_{\text{time}},N_Q} \\
-  \end{bmatrix}
- $$
-  
+$$
+\mathbf{M}_i = \begin{bmatrix}
+m_{i,1,1} & m_{i,1,2} & \cdots & m_{i,1,N_Q} \\
+m_{i,2,1} & m_{i,2,2} & \cdots & m_{i,2,N_Q} \\
+\vdots & \vdots & \ddots & \vdots \\
+m_{i,N_{\text{time}},1} & m_{i,N_{\text{time}},2} & \cdots & m_{i,N_{\text{time}},N_Q} \\
+\end{bmatrix}
+$$
+
 - **过程条件**$\mathbf{E}_i$：
 
   表示每次实验运行的具体条件，如温度、初始浓度等。
@@ -148,43 +148,48 @@ $$
 
 ##### OUTPUT
 
-- 无补料:
-  前后两个等间隔时刻测量之间的浓度变化斜率进行近似，如下所示：
-  
-  - Consumption variable
-  $$
-   \frac{dM^i}{dt}=-k(\mathrm{M}^i)\\
-   -k(\mathrm{M}^i) = \frac{dM^i}{dt}  \\
-   y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt}  \\
-   \text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \bold{-} \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
-  $$
-  - Increation variable
-  $$
-   \frac{\mathrm{dM}^i}{\mathrm{dt}}=k(\mathrm{M}^i)\\
-   k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}} \\
-   y_{t}^i := k(\mathrm{M}^i) = \frac{\mathrm{dM}^i}{\mathrm{dt}}  \\
-   \text{where }\frac{\mathrm{dM}^i}{\mathrm{dt}} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
-  $$
-      
-  
+###### 无补料:
+
+前后两个等间隔时刻测量之间的浓度变化斜率进行近似，如下所示：
+
+- Consumption variable
+
+$$
+\frac{dM^i}{dt}=-k(\mathrm{M}^i)\\
+-k(\mathrm{M}^i) = \frac{dM^i}{dt}  \\
+y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt}  \\
+\text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \bold{-} \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
+$$
+
+- Increation variable
+$$
+\frac{dM^i}{dt}=k(\mathrm{M}^i)\\
+k(\mathrm{M}^i) = \frac{dM^i}{dt} \\
+y_{t}^i := k(\mathrm{M}^i) = \frac{dM^i}{dt}  \\
+\text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t}
+$$
+
+
   其中:
-  
+
   - $M_{t}^i \in \mathbb{R}^{N_Q}$是在时间$t$的测量向量，
   - $\Delta t$​​ 是两个测量之间的时间间隔。
   - **$\Delta F_{t+{\Delta t}}$是离线检测完后,立马发生的补料动作,从数据的形式上,其时间与当前时刻$t$​​的离线检测状态变量位于相同行**, 注意此处为质量, 不是浓度
   - $-k(\mathrm{M}^i)$表示浓度$i$处于消耗状态
   - $k(\mathrm{M}^i)$表示浓度$i$处于增加状态
   - $y_{t}^i$是表示浓度$i$的速率,用于建模中的标签
-  
-- 有补料, 以某个浓度$i$的消耗为例:
- $$
-  \frac{dM^i}{dt}=-k(\mathrm{M}^i) + \text{feed rate} \\
-  \frac{dM^i}{dt}=-k(\mathrm{M}^i) + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t} \\
-  -k(\mathrm{M}^i) = \frac{dM^i}{dt} - \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
-  y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt} + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
-  \text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t} \\
-  y^i_t = \frac{M_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} - M_t \cdot V_t}{V_t \cdot \Delta t} - \frac{\Delta F_{t+{\Delta{t}}}}{V_t \cdot \Delta t}
- $$
+
+###### 有补料:
+
+以某个浓度$i$的消耗为例:
+$$
+\frac{dM^i}{dt}=-k(\mathrm{M}^i) + \text{feed rate} \\
+\frac{dM^i}{dt}=-k(\mathrm{M}^i) + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t} \\
+-k(\mathrm{M}^i) = \frac{dM^i}{dt} - \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
+y_{t}^i := k(\mathrm{M}^i) = -\frac{dM^i}{dt} + \frac{\Delta F_{t+{\Delta t}}}{V_t \cdot \Delta t}  \\
+\text{where }\frac{dM^i}{dt} ≈ \frac{\Delta M^i_t}{\Delta t} = \frac{M_{t+{\Delta t}}^i - M_{t}^i}{\Delta t} \\
+y^i_t = \frac{M_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} - M_t \cdot V_t}{V_t \cdot \Delta t} - \frac{\Delta F_{t+{\Delta{t}}}}{V_t \cdot \Delta t}
+$$
 
 
   其中:
@@ -210,24 +215,27 @@ $$
 
 
 
-#### 预测
+#### `预测`
 
-- 无补料
+##### 无补料
 
-对于未知实验条件$E'$​​ 的预测如下所示：
+对于未知实验条件$E'$的预测如下所示：
 $$
 M'_0 = \text{InitialConcentration}(E') \\
 M'_{t+{\Delta{t}}} = M'_t + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta t
 $$
 
-- 有补料
-    - 质量版本
-   $$
-    M'_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} = [M'_t + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta t] \cdot V_t + \Delta F_{t+{\Delta{t}}} \\
-   $$
-	- 浓度版本
-	$$
-	    M'_{t+{\Delta{t}}} = \left( M'_t  + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta{t} \right) \cdot \frac{V_t}{V_{t+{\Delta{t}}}} + \frac{\Delta F_{t+{\Delta{t}}}}{V_{t+{\Delta{t}}}} \\
+##### 有补料
+
+- 质量版本
+
+$$
+M'_{t+{\Delta{t}}} \cdot V_{t+{\Delta{t}}} = [M'_t + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta t] \cdot V_t + \Delta F_{t+{\Delta{t}}} \\
+$$
+- 浓度版本
+
+$$
+M'_{t+{\Delta{t}}} = \left( M'_t  + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot \Delta{t} \right) \cdot \frac{V_t}{V_{t+{\Delta{t}}}} + \frac{\Delta F_{t+{\Delta{t}}}}{V_{t+{\Delta{t}}}} \\
 	    M'_{t+{\Delta{t}}} = \left( M'_t \cdot \frac{1}{\Delta{t}}  + \Phi((M'_t, \text{ExtraFeatures}(E')))  \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \cdot V_t + \frac{\Delta{t}}{V_{t+{\Delta{t}}}}\frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}} \\
 	    M'_{t+{\Delta{t}}} = \left( M'_t \cdot V_t \cdot \frac{1}{\Delta{t}} + \left( M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}} - M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}} \right) + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot V_t + \frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}} \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \\
 	    M'_{t+{\Delta{t}}} = \left(  M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}}  + \left( M'_t \cdot V_t \cdot \frac{1}{\Delta{t}} - M'_t \cdot V_{t+{\Delta{t}}} \cdot \frac{1}{\Delta{t}} \right) + \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot V_t + \frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}} \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \\
@@ -236,8 +244,8 @@ $$
 	    M'_{t+{\Delta{t}}} =  M'_t + \left( \Phi((M'_t, \text{ExtraFeatures}(E'))) \cdot V_t + \frac{\Delta F_{t+{\Delta{t}}}}{\Delta{t}}  - \left( M'_t \cdot \frac{V_{t+{\Delta{t}}} - V_t}{\Delta{t}}  \right) \right) \cdot \frac{\Delta{t}}{V_{t+{\Delta{t}}}} \\
 	    \text{short for:} \\
 	    c(t_{i+1}) = c(t_i) + \left( GP(s) \cdot V + u_f - c(t_i) \cdot \frac{dV}{dt} \right) \cdot \frac{t_{i+1} - t_i}{V}
-	$$
-	    
+$$
+
 
 在我们的实验中，我们有葡萄糖和谷氨酰胺进料，因此向量$\Delta F$​ 只有在对应于这两种物质的位置上有非零条目。
 
